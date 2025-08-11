@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learned Faces - Age Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .back-btn {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn.danger {
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+        }
+
+        .btn.small {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .faces-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .face-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .face-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .face-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .face-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .face-id {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+
+        .face-details {
+            margin: 10px 0;
+        }
+
+        .face-detail {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .face-detail:last-child {
+            border-bottom: none;
+        }
+
+        .face-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .rename-input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 150px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .message.success {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            color: #155724;
+        }
+
+        .message.error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .faces-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .face-actions {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Learned Faces</h1>
+            <p>Manage and view all recognized faces</p>
+        </div>
+
+        <div class="main-content">
+            <div class="back-btn">
+                <a href="/" class="btn">← Back to Home</a>
+                <button class="btn" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn danger" onclick="resetAllFaces()">🗑️ Reset All Faces</button>
+            </div>
+
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading learned faces...</p>
+            </div>
+
+            <div id="message"></div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalFaces">0</div>
+                    <div class="stat-label">Total Learned Faces</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgAge">0</div>
+                    <div class="stat-label">Average Age</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRecognitions">0</div>
+                    <div class="stat-label">Total Recognitions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="recentFaces">0</div>
+                    <div class="stat-label">Recently Seen (24h)</div>
+                </div>
+            </div>
+
+            <div id="facesContainer">
+                <!-- Faces will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLoading() {
+            document.querySelector('.loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="message ${type}">${message}</div>`;
+
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 3000);
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString();
+        }
+
+        function formatTimeAgo(timestamp) {
+            const now = Date.now() / 1000;
+            const diff = now - timestamp;
+
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+            return `${Math.floor(diff / 86400)} days ago`;
+        }
+
+        function loadLearnedFaces() {
+            showLoading();
+
+            fetch('/api/learned_faces')
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                displayFaces(data.faces);
+                updateStats(data.faces);
+            })
+            .catch(error => {
+                hideLoading();
+                showMessage('Error loading faces: ' + error.message, 'error');
+            });
+        }
+
+        function updateStats(faces) {
+            const now = Date.now() / 1000;
+            const oneDayAgo = now - 86400;
+
+            // Total faces
+            document.getElementById('totalFaces').textContent = faces.length;
+
+            // Average age
+            const avgAge = faces.length > 0 ?
+                Math.round(faces.reduce((sum, face) => sum + face.age, 0) / faces.length) : 0;
+            document.getElementById('avgAge').textContent = avgAge;
+
+            // Total recognitions
+            const totalRecognitions = faces.reduce((sum, face) => sum + face.count, 0);
+            document.getElementById('totalRecognitions').textContent = totalRecognitions;
+
+            // Recent faces (24h)
+            const recentFaces = faces.filter(face => face.last_seen > oneDayAgo).length;
+            document.getElementById('recentFaces').textContent = recentFaces;
+        }
+
+        function displayFaces(faces) {
+            const container = document.getElementById('facesContainer');
+
+            if (faces.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No Learned Faces Yet</h3>
+                        <p>Start using the capture or real-time mode to learn new faces!</p>
+                        <br>
+                        <a href="/capture_mode" class="btn">📷 Capture Mode</a>
+                        <a href="/realtime_mode" class="btn">🎥 Real-time Mode</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const facesGrid = document.createElement('div');
+            facesGrid.className = 'faces-grid';
+
+            faces.forEach(face => {
+                const faceCard = document.createElement('div');
+                faceCard.className = 'face-card';
+                faceCard.innerHTML = `
+                    <div class="face-header">
+                        <div class="face-name" id="name-${face.id}">${face.name}</div>
+                        <div class="face-id">ID: ${face.id}</div>
+                    </div>
+                    <div class="face-details">
+                        <div class="face-detail">
+                            <span><strong>Age:</strong></span>
+                            <span>${face.age} years</span>
+                        </div>
+                        <div class="face-detail">
+                            <span><strong>Recognitions:</strong></span>
+                            <span>${face.count} times</span>
+                        </div>
+                        <div class="face-detail">
+                            <span><strong>Last Seen:</strong></span>
+                            <span title="${formatTimestamp(face.last_seen)}">${formatTimeAgo(face.last_seen)}</span>
+                        </div>
+                    </div>
+                    <div class="face-actions">
+                        <input type="text" class="rename-input" id="rename-${face.id}" placeholder="New name..." value="${face.name}">
+                        <button class="btn small" onclick="renamePerson(${face.id})">✏️ Rename</button>
+                    </div>
+                `;
+                facesGrid.appendChild(faceCard);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(facesGrid);
+        }
+
+        function renamePerson(personId) {
+            const newName = document.getElementById(`rename-${personId}`).value.trim();
+
+            if (!newName) {
+                showMessage('Please enter a valid name', 'error');
+                return;
+            }
+
+            fetch('/api/rename_person', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    person_id: personId,
+                    new_name: newName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showMessage(data.message, 'success');
+                    document.getElementById(`name-${personId}`).textContent = newName;
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Error renaming person: ' + error.message, 'error');
+            });
+        }
+
+        function resetAllFaces() {
+            if (!confirm('Are you sure you want to reset all learned faces? This action cannot be undone.')) {
+                return;
+            }
+
+            fetch('/api/reset_learned_faces', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showMessage(data.message, 'success');
+                    loadLearnedFaces(); // Reload the page data
+                } else {
+                    showMessage('Error resetting faces', 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Error resetting faces: ' + error.message, 'error');
+            });
+        }
+
+        function refreshData() {
+            loadLearnedFaces();
+        }
+
+        // Load faces when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLearnedFaces();
+        });
+
+        // Auto-refresh every 30 seconds if page is visible
+        setInterval(() => {
+            if (!document.hidden) {
+                loadLearnedFaces();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

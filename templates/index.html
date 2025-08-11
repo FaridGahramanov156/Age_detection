@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age Prediction App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .mode-selection {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .mode-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-width: 300px;
+            flex: 1;
+            max-width: 350px;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .mode-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .mode-card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            margin-bottom: 20px;
+        }
+
+        .video-container, .image-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .video-container img, .video-container video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-area.dragover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #764ba2;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+        }
+
+        .face-result {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: #d8000c;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            color: #4f8a10;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .mode-selection {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .mode-card {
+                min-width: auto;
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Age Prediction App</h1>
+            <p>Advanced AI-powered age estimation with face learning and recognition</p>
+        </div>
+
+        <div class="mode-selection">
+            <div class="mode-card" onclick="window.location.href='/capture_mode'">
+                <h2>📷 Capture Mode</h2>
+                <p>Take a single photo and get instant age prediction results. The system will learn new faces and recognize them instantly on future captures.</p>
+                <div class="btn">Try Capture Mode</div>
+            </div>
+
+            <div class="mode-card" onclick="window.location.href='/realtime_mode'">
+                <h2>🎥 Real-time Mode</h2>
+                <p>Live video stream with continuous age prediction and face recognition. Watch the AI learn and recognize faces in real-time with smooth performance.</p>
+                <div class="btn">Try Real-time Mode</div>
+            </div>
+
+            <div class="mode-card" onclick="window.location.href='/learned_faces'">
+                <h2>🧠 Learned Faces</h2>
+                <p>View and manage all learned faces. Rename people, see recognition statistics, and reset the learning database.</p>
+                <div class="btn">Manage Faces</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <h2>🚀 Advanced Features</h2>
+            <ul style="padding-left: 20px; margin: 15px 0;">
+                <li><strong>🧠 Face Learning & Recognition:</strong> System learns faces automatically and recognizes them instantly</li>
+                <li><strong>⚡ Stable Age Prediction:</strong> Once learned, displays consistent age for recognized faces</li>
+                <li><strong>📊 Recognition Statistics:</strong> Track how many times each person has been recognized</li>
+                <li><strong>✏️ Person Management:</strong> Rename recognized people and manage the face database</li>
+                <li><strong>🎯 High-accuracy Detection:</strong> Uses InsightFace AI model with face embeddings</li>
+                <li><strong>🔄 Real-time Processing:</strong> Live face detection, learning, and recognition</li>
+                <li><strong>📱 Mobile-responsive Design:</strong> Works seamlessly on all devices</li>
+                <li><strong>💾 Persistent Storage:</strong> Learned faces are saved and persist between sessions</li>
+            </ul>
+
+            <h3 style="margin-top: 25px; color: #667eea;">🔍 How Face Learning Works</h3>
+            <p style="margin: 15px 0; line-height: 1.6;">
+                When a new face is detected, the system analyzes facial features and creates a unique "face embedding" - a mathematical representation of that person's face.
+                This embedding is stored along with the predicted age. When the same person appears again, the system compares the new face against all stored embeddings
+                and instantly recognizes them, displaying their stable age without re-processing.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

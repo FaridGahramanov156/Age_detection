@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Mode - Age Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .back-btn {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.stop {
+            background: linear-gradient(45deg, #ff6b6b, #ff5252);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .video-container {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .video-container img {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status.inactive {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #856404;
+        }
+
+        .status.active {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            color: #155724;
+        }
+
+        .status.error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #721c24;
+        }
+
+        .info-panel {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-panel h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .info-panel ul {
+            padding-left: 20px;
+        }
+
+        .info-panel li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .placeholder {
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 60px 20px;
+            text-align: center;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 Real-time Mode</h1>
+            <p>Live video stream with continuous age prediction</p>
+        </div>
+
+        <div class="main-content">
+            <div class="back-btn">
+                <a href="/" class="btn">← Back to Home</a>
+            </div>
+
+            <div class="controls">
+                <button id="startBtn" class="btn" onclick="startCamera()">🚀 Start Camera</button>
+                <button id="stopBtn" class="btn stop" onclick="stopCamera()" disabled>⏹️ Stop Camera</button>
+                <a href="/learned_faces" class="btn">🧠 View Learned Faces</a>
+            </div>
+
+            <div id="status" class="status inactive">
+                📴 Camera is not active. Click "Start Camera" to begin real-time age prediction.
+            </div>
+
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Initializing camera...</p>
+            </div>
+
+            <div class="video-container">
+                <div id="videoPlaceholder" class="placeholder">
+                    🎯 Live video stream will appear here
+                </div>
+                <img id="videoFeed" src="" style="display: none;" alt="Live Video Feed">
+            </div>
+
+            <div class="info-panel">
+                <h3>🧠 Face Learning & Recognition</h3>
+                <ul>
+                    <li><strong>Learning Phase:</strong> When a new face is detected, the system learns it and shows "LEARNING" status</li>
+                    <li><strong>Recognition Phase:</strong> Once learned, the face will be instantly recognized with "RECOGNIZED" status</li>
+                    <li><strong>Stable Age Display:</strong> Recognized faces show consistent age predictions for stability</li>
+                    <li><strong>Multiple Faces:</strong> Can learn and recognize multiple people simultaneously</li>
+                    <li><strong>Visual Indicators:</strong> Green boxes for recognized faces, orange boxes for learning</li>
+                    <li><strong>Confidence Score:</strong> Shows recognition confidence percentage</li>
+                </ul>
+            </div>
+
+            <div class="info-panel">
+                <h3>📝 Usage Instructions</h3>
+                <ul>
+                    <li>1. Click "Start Camera" to begin the video stream</li>
+                    <li>2. Allow browser access to your webcam when prompted</li>
+                    <li>3. Position your face(s) in front of the camera</li>
+                    <li>4. Watch real-time age predictions appear on detected faces</li>
+                    <li>5. Click "Stop Camera" when you're done</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isStreaming = false;
+        let refreshInterval;
+
+        function showLoading() {
+            document.querySelector('.loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        function updateStatus(message, type = 'inactive') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function startCamera() {
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            showLoading();
+            startBtn.disabled = true;
+
+            // First check model status
+            fetch('/api/model_status')
+            .then(response => response.json())
+            .then(modelData => {
+                if (!modelData.model_initialized) {
+                    hideLoading();
+                    updateStatus('❌ AI model not initialized. Please refresh the page and try again.', 'error');
+                    startBtn.disabled = false;
+                    return;
+                }
+
+                updateStatus(`🧠 Model ready with ${modelData.learned_faces_count} learned faces. Starting camera...`, 'active');
+
+                // Initialize camera
+                return fetch('/start_camera');
+            })
+            .then(response => {
+                if (!response) return; // Skip if model check failed
+                return response.json();
+            })
+            .then(data => {
+                if (!data) return; // Skip if model check failed
+
+                hideLoading();
+                if (data.error) {
+                    updateStatus('❌ Camera Error: ' + data.error, 'error');
+                    startBtn.disabled = false;
+                } else {
+                    // Start video stream
+                    const videoFeed = document.getElementById('videoFeed');
+                    const placeholder = document.getElementById('videoPlaceholder');
+
+                    updateStatus('📹 Loading video stream...', 'active');
+
+                    videoFeed.src = '/video_feed?' + new Date().getTime();
+                    videoFeed.onload = function() {
+                        updateStatus('✅ Real-time face recognition active!', 'active');
+                    };
+                    videoFeed.style.display = 'block';
+                    placeholder.style.display = 'none';
+
+                    isStreaming = true;
+                    stopBtn.disabled = false;
+
+                    // Refresh the video feed periodically to handle any connection issues
+                    refreshInterval = setInterval(() => {
+                        if (isStreaming) {
+                            videoFeed.src = '/video_feed?' + new Date().getTime();
+                        }
+                    }, 30000); // Refresh every 30 seconds
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                updateStatus('❌ Error: ' + error.message, 'error');
+                startBtn.disabled = false;
+            });
+        }
+
+        function stopCamera() {
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const videoFeed = document.getElementById('videoFeed');
+            const placeholder = document.getElementById('videoPlaceholder');
+
+            isStreaming = false;
+            stopBtn.disabled = true;
+
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+
+            // Stop video stream
+            videoFeed.style.display = 'none';
+            placeholder.style.display = 'block';
+
+            // Stop camera on server
+            fetch('/stop_camera')
+            .then(response => response.json())
+            .then(data => {
+                startBtn.disabled = false;
+                updateStatus('📴 Camera stopped. Click "Start Camera" to resume.', 'inactive');
+            })
+            .catch(error => {
+                startBtn.disabled = false;
+                updateStatus('⚠️ Camera stopped (with errors)', 'error');
+            });
+        }
+
+        // Handle page visibility change to manage resources
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && isStreaming) {
+                // Pause video feed when tab is not visible
+                const videoFeed = document.getElementById('videoFeed');
+                videoFeed.style.display = 'none';
+            } else if (!document.hidden && isStreaming) {
+                // Resume video feed when tab becomes visible
+                const videoFeed = document.getElementById('videoFeed');
+                videoFeed.src = '/video_feed?' + new Date().getTime();
+                videoFeed.style.display = 'block';
+            }
+        });
+
+        // Clean up when page is closed
+        window.addEventListener('beforeunload', function() {
+            if (isStreaming) {
+                fetch('/stop_camera');
+            }
+        });
+
+        // Handle video feed errors with better debugging
+        document.getElementById('videoFeed').addEventListener('error', function() {
+            console.log('Video feed error detected');
+            if (isStreaming) {
+                updateStatus('⚠️ Video feed interrupted. Reconnecting...', 'error');
+                setTimeout(() => {
+                    if (isStreaming) {
+                        console.log('Attempting to reconnect video feed');
+                        this.src = '/video_feed?' + new Date().getTime();
+                    }
+                }, 2000);
+            }
+        });
+
+        // Handle video feed load with better feedback
+        document.getElementById('videoFeed').addEventListener('load', function() {
+            console.log('Video feed loaded successfully');
+            if (isStreaming) {
+                updateStatus('✅ Real-time face recognition active!', 'active');
+            }
+        });
+
+        // Add connection monitoring
+        let connectionCheckInterval;
+
+        function startConnectionMonitoring() {
+            connectionCheckInterval = setInterval(() => {
+                if (isStreaming) {
+                    fetch('/api/model_status')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Connection is working
+                    })
+                    .catch(error => {
+                        console.log('Connection check failed:', error);
+                        updateStatus('⚠️ Connection issues detected', 'error');
+                    });
+                }
+            }, 10000); // Check every 10 seconds
+        }
+
+        function stopConnectionMonitoring() {
+            if (connectionCheckInterval) {
+                clearInterval(connectionCheckInterval);
+                connectionCheckInterval = null;
+            }
+        }
+
+        // Start monitoring when camera starts
+        function enhancedStartCamera() {
+            startCamera();
+            if (isStreaming) {
+                startConnectionMonitoring();
+            }
+        }
+    </script>
+</body>
+</html>
