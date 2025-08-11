@@ -1,0 +1,25 @@
+# render.yaml
+# Render service configuration for Age Prediction App
+
+services:
+  - type: web
+    name: age-prediction-app
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn --config gunicorn.conf.py app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: WEB_CONCURRENCY
+        value: 1
+    autoDeploy: true
+    branch: main
+    rootDir: .
+    disk:
+      name: age-prediction-disk
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
